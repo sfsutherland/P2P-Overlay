@@ -28,15 +28,14 @@ import wireformats.RegistryReportsRegistrationStatus;
 import wireformats.RegistryRequestsTaskInitiate;
 import wireformats.RegistrySendsNodeManifest;
 
-public class MessagingNode implements Node {
+public class MessagingNode extends Node {
 	
 	private static Logger LOG = LogManager.getLogger( MessagingNode.class);
 	private final int registryPort;
 	private final String registryHost;
-	private boolean serverPortBound = false;
+	
 	private int listeningPort;
 	private int uniqueID;
-	private TCPConnectionCache connections;
 	private ArrayList<Integer> systemIDs = null;
 	private Random random;
 	private RoutingTable routingTable = null;
@@ -45,16 +44,11 @@ public class MessagingNode implements Node {
 	private int sendTracker = 0;
 	private int receiveTracker = 0;
 	private int relayTracker = 0;
-	
-	private static void usageErrorExit() {
-		System.out.println("Please specify registry host and port number.");
-		System.exit(1);
-	}
-	
+		
 	public static void main(String[] args) {
 		
 		if (args.length < 2) {
-			usageErrorExit();
+			usageErrorExit("Please specify registry host and port number.");
 		}
 		int suppliedPortNumber = 0;
 		String suppliedHost = args[0];
@@ -62,48 +56,68 @@ public class MessagingNode implements Node {
 			suppliedPortNumber = Integer.parseInt(args[1]);
 		}
 		catch(NumberFormatException n) {
-			usageErrorExit();
+			usageErrorExit("Please specify registry host and port number.");
 		}
 		
 		new MessagingNode(suppliedHost, suppliedPortNumber);
 
-	}
-	public synchronized void setPortBound(boolean b) {
-		this.serverPortBound = b;
-		if (serverPortBound) notify();
-	}
-	
-	private synchronized void waitForPortBind() {
-		if (!serverPortBound)
-			try {
-				wait();
-			} catch (InterruptedException e) {
-				LOG.debug("wait() interrupted");
-			}
 	}
 	
 	private MessagingNode(String host, int port) {
 		this.registryPort = port;
 		this.registryHost = host;
 		this.random = new Random();
+		this.connections = new TCPConnectionCache(this);
+		
 		
 		LOG.debug("New MessagingNode initialized for registry "
 				+ this.registryHost + " on port " + this.registryPort);
+		
+		startDoingStuff();
+	}
+	
+	private void startDoingStuff() {
+		
+		addRegistryConnectionToConnectionsCache();				
+		startServer();
+		register();
+		startCommandParser();
+	}
+	
+	private void addRegistryConnectionToConnectionsCache() {
+		this.connections.addRegistry(createTCPConnectionToRegistry());
+	}
+	
+	private TCPConnection createTCPConnectionToRegistry() {
 		Socket socket = null;
 		try {
 			socket = new Socket(registryHost, registryPort);
 		} catch (IOException e) {
-			LOG.fatal("Initializing socket");
+			LOG.fatal("Initializing socket to registry");
 			System.exit(1);
 		}
-		this.connections = new TCPConnectionCache(this);
-		TCPConnection registryConnection = new TCPConnection(socket);
-		this.connections.addRegistry(registryConnection);
-				
-		createServerThread(connections);
-		register(registryConnection);
-		startCommandParser();
+		
+		return new TCPConnection(socket);		
 	}
+	
+	private void startServer() {
+		TCPServerThread server = startServerThread();
+		rememberServerListeningPort(server);
+	}
+	
+	private TCPServerThread startServerThread() {
+		TCPServerThread server = new TCPServerThread(this.connections);
+		Thread serverThread = new Thread(server);
+		serverThread.start();
+		return server;
+	}	
+	
+	private void rememberServerListeningPort(TCPServerThread server) {
+		waitForPortBind(); // server thread has notified us that a port is bound
+		this.listeningPort = server.port;
+		LOG.debug("Listening on port " + this.listeningPort);		
+	}
+	
 	
 	private void startCommandParser() {
 		InteractiveCommandParser commandParser = new InteractiveCommandParser(this);
@@ -111,20 +125,8 @@ public class MessagingNode implements Node {
 		commandParserThread.start();
 	}
 	
-	private void createServerThread(TCPConnectionCache cc) {
-		TCPServerThread server = new TCPServerThread(cc);
-		Thread serverThread = new Thread(server);
-		serverThread.start();
-		waitForPortBind(); // server thread has notified us that a port is bound
-		this.listeningPort = server.port;
-		LOG.debug("Listening on port " + this.listeningPort);
-	}
-	
-	private void register(TCPConnection registryConnection) {
-		Event event = new OverlayNodeSendsRegistration(this.listeningPort);
-		registryConnection.send(event);
-	}
 
+	
 	@Override
 	public void onEvent(Event e) {
 		switch (e.getType()) {
@@ -153,6 +155,29 @@ public class MessagingNode implements Node {
 		}
 	}
 	
+	public void handleUserInput(String input) {
+		switch (input) {
+		
+		case "exit-overlay":
+			deregister();
+			break;
+		case "print-counters-and-diagnostics":
+			printCountersAndDiagnostics();
+			break;
+		default:
+			System.out.println("Unrecognized command");
+			break;
+		}
+	}
+	
+
+	
+	private void register() {
+		Event event = new OverlayNodeSendsRegistration(this.listeningPort);
+		this.connections.getRegistry().send(event);
+	}
+
+	
 	private void handleRegistryRequestsTrafficSummary() {
 		Event trafficReport = new OverlayNodeReportsTrafficSummary(this.uniqueID, this.sendTracker, this.relayTracker, this.sendSummation, this.receiveTracker, this.receiveSummation);
 		this.connections.getRegistry().send(trafficReport);
@@ -162,7 +187,10 @@ public class MessagingNode implements Node {
 		// multiple receiver threads access here and mutate trackers
 		if (d.destinationID != this.uniqueID) {
 			this.relayTracker++;
-			relayMessage(d);
+			d.addHop(this.uniqueID);
+			RoutingEntry routeEntry = this.routingTable.routeTo(d.destinationID);
+			TCPConnection connection = this.connections.getByID(routeEntry.nodeID);
+			connection.send(d);
 			LOG.debug("Relaying data message. relayTracker is now " + this.relayTracker);
 		}
 			
@@ -171,13 +199,6 @@ public class MessagingNode implements Node {
 			this.receiveTracker++;
 			LOG.debug("Received data message meant for me, updating receiveTracker to " + this.receiveTracker);
 		}
-	}
-	
-	private void relayMessage(OverlayNodeSendsData d) {
-		d.addHop(this.uniqueID);
-		RoutingEntry routeEntry = this.routingTable.routeTo(d.destinationID);
-		TCPConnection connection = this.connections.getByID(routeEntry.nodeID);
-		connection.send(d);
 	}
 	
 	private void handleRegistryRequestsTaskInitiate(RegistryRequestsTaskInitiate r) {
@@ -264,21 +285,6 @@ public class MessagingNode implements Node {
 		}
 		else this.uniqueID = id;
 		System.out.println("Successfully registered");
-	}
-	
-	public void handleUserInput(String input) {
-		switch (input) {
-		
-		case "exit-overlay":
-			deregister();
-			break;
-		case "print-counters-and-diagnostics":
-			printCountersAndDiagnostics();
-			break;
-		default:
-			System.out.println("Unrecognized command");
-			break;
-		}
 	}
 	
 	private void printCountersAndDiagnostics() {

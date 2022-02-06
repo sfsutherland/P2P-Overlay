@@ -30,14 +30,13 @@ import wireformats.RegistryRequestsTaskInitiate;
 import wireformats.RegistryRequestsTrafficSummary;
 import wireformats.RegistrySendsNodeManifest;
 
-public class Registry implements Node {
+public class Registry extends Node {
 	
 	private static Logger LOG = LogManager.getLogger( Registry.class);
 	private final int port;
 	private ArrayList<Integer> registeredIDs;
 	private Random rand;
-	private boolean serverPortBound;
-	private TCPConnectionCache connections;
+	
 	private ArrayList<RoutingTable> routingTables;
 	private StatisticsCollectorAndDisplay statisticsCollector;
 	
@@ -48,34 +47,16 @@ public class Registry implements Node {
 	public static void main(String[] args) {
 		
 		if (args.length < 1) {
-			usageErrorExit();
+			usageErrorExit("Please specify port number.");
 		}
 		int suppliedPortNumber = 0;
 		try {
 			suppliedPortNumber = Integer.parseInt(args[0]);
 		}
 		catch(NumberFormatException n) {
-			usageErrorExit();
+			usageErrorExit("Please specify port number.");
 		}
 		new Registry(suppliedPortNumber);
-	}
-	
-	private static void usageErrorExit() {
-		System.out.println("Please specify port number.");
-		System.exit(1);
-	}
-	
-	private Registry(int port) {
-		this.port = port;
-		LOG.debug("New Registry initialized with port " + port);
-		registeredIDs = new ArrayList<Integer>();
-		this.connections = new TCPConnectionCache(this);
-		this.rand = new Random();
-		this.routingTables = new ArrayList<RoutingTable>();
-		this.statisticsCollector = new StatisticsCollectorAndDisplay();
-		
-		createServerThread(connections);
-		startCommandParser();
 	}
 	
 	private void startCommandParser() {
@@ -93,33 +74,6 @@ public class Registry implements Node {
 		System.out.println("Waiting for nodes to connect");
 	}
 	
-	public synchronized void setPortBound(boolean b) {
-		this.serverPortBound = b;
-		if (serverPortBound) notify();
-	}
-	
-	private synchronized void waitForPortBind() {
-		if (!serverPortBound)
-			try {
-				wait();
-			} catch (InterruptedException e) {
-				LOG.debug("wait() interrupted");
-			}
-	}
-	
-	public int createNewID() {
-		if (this.registeredIDs.size() > 127) {
-			LOG.debug("Reached size limit of registered nodes");
-			return -1;
-		}
-		Integer id;
-		do {
-			id = rand.nextInt(128);
-		} while (this.registeredIDs.contains(id));
-		this.registeredIDs.add(id);
-		return id;
-	}
-
 	@Override
 	public void onEvent(Event e) {
 		switch(e.getType()) {
@@ -144,6 +98,75 @@ public class Registry implements Node {
 		}
 	}
 	
+	public void handleUserInput(String input) {
+		if (input.startsWith("setup-overlay")) {
+			String[] setupArgs = input.split(" ");
+			int n = 3;
+			if (setupArgs.length > 1) {
+				try {
+					n = Integer.parseInt(setupArgs[1]);
+				} catch (NumberFormatException ne) {
+					System.out.println("Invalid argument to setup-overlay, using default of 3");
+				}
+			}
+			setupOverlay(n);
+		}
+		else if (input.startsWith("start")) {
+			String[] startArgs = input.split(" ");
+			if (startArgs.length < 2) {
+				System.out.println("Please specify number of messages");
+			}
+			else {
+				int n;
+				try {
+					n = Integer.parseInt(startArgs[1]);
+				} catch (NumberFormatException ne) {
+					System.out.println("Invalid argument to start");
+					return;
+				}
+				initiateDataTransfer(n);
+			}
+		}
+		
+		else if (input.equals("list-messaging-nodes")) {
+			listMessagingNodes();
+		}
+		
+		else if (input.equals("list-routing-tables")) {
+			listRoutingTables();
+		}
+		
+		else {
+			System.out.println("Unrecognized command");
+		}
+	}
+	
+	private Registry(int port) {
+		this.port = port;
+		LOG.debug("New Registry initialized with port " + port);
+		registeredIDs = new ArrayList<Integer>();
+		this.connections = new TCPConnectionCache(this);
+		this.rand = new Random();
+		this.routingTables = new ArrayList<RoutingTable>();
+		this.statisticsCollector = new StatisticsCollectorAndDisplay();
+		
+		createServerThread(connections);
+		startCommandParser();
+	}
+	
+	public int createNewID() {
+		if (this.registeredIDs.size() > 127) {
+			LOG.debug("Reached size limit of registered nodes");
+			return -1;
+		}
+		Integer id;
+		do {
+			id = rand.nextInt(128);
+		} while (this.registeredIDs.contains(id));
+		this.registeredIDs.add(id);
+		return id;
+	}
+
 	private synchronized void handleOverlayNodeReportsTrafficSummary(OverlayNodeReportsTrafficSummary o) {
 		this.statisticsCollector.addReport(o);
 		LOG.debug("Received traffic summary from node " + o.id + " with receive count of " + o.totalReceived);
@@ -270,48 +293,7 @@ public class Registry implements Node {
 		System.out.println("Node registered. Total system nodes: " + this.registeredIDs.size());
 	}
 
-	public void handleUserInput(String input) {
-		if (input.startsWith("setup-overlay")) {
-			String[] setupArgs = input.split(" ");
-			int n = 3;
-			if (setupArgs.length > 1) {
-				try {
-					n = Integer.parseInt(setupArgs[1]);
-				} catch (NumberFormatException ne) {
-					System.out.println("Invalid argument to setup-overlay, using default of 3");
-				}
-			}
-			setupOverlay(n);
-		}
-		else if (input.startsWith("start")) {
-			String[] startArgs = input.split(" ");
-			if (startArgs.length < 2) {
-				System.out.println("Please specify number of messages");
-			}
-			else {
-				int n;
-				try {
-					n = Integer.parseInt(startArgs[1]);
-				} catch (NumberFormatException ne) {
-					System.out.println("Invalid argument to start");
-					return;
-				}
-				initiateDataTransfer(n);
-			}
-		}
-		
-		else if (input.equals("list-messaging-nodes")) {
-			listMessagingNodes();
-		}
-		
-		else if (input.equals("list-routing-tables")) {
-			listRoutingTables();
-		}
-		
-		else {
-			System.out.println("Unrecognized command");
-		}
-	}
+
 	
 	private void listRoutingTables() {
 
