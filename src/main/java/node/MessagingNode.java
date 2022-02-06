@@ -33,17 +33,19 @@ public class MessagingNode extends Node {
 	private static Logger LOG = LogManager.getLogger( MessagingNode.class);
 	private final int registryPort;
 	private final String registryHost;
-	
 	private int listeningPort;
+		
 	private int uniqueID;
-	private ArrayList<Integer> systemIDs = null;
-	private Random random;
-	private RoutingTable routingTable = null;
 	private long sendSummation = 0;
 	private long receiveSummation = 0;
 	private int sendTracker = 0;
 	private int receiveTracker = 0;
 	private int relayTracker = 0;
+	
+	private ArrayList<Integer> systemIDs = null;
+	private Random random;
+	private RoutingTable routingTable = null;
+
 		
 	public static void main(String[] args) {
 		
@@ -177,6 +179,7 @@ public class MessagingNode extends Node {
 	}
 	
 	private void sendEventToRegistry(Event event) {
+		LOG.debug("Sending " + Protocol.typeString( event.getType() ) + " event to registry.");
 		this.connections.getRegistry().send(event);
 	}
 
@@ -210,35 +213,59 @@ public class MessagingNode extends Node {
 		for (int i = 0; i < r.numberOfMessages; i++) {
 			sendDataMessage();
 		}
+		reportTaskFinished();
+	}
+	
+	private void reportTaskFinished() {
 		// send task_finished_message
 		Event finishedMessage = new OverlayNodeReportsTaskFinished(this.listeningPort, this.uniqueID);
-		this.connections.getRegistry().send(finishedMessage);
-		System.out.println("Finished sending messages");
+		sendEventToRegistry(finishedMessage);
+		
+		LOG.info("Finished sending all messages");
 	}
 	
 	private void sendDataMessage() {
-		int index = this.random.nextInt(this.systemIDs.size());
-		LOG.debug("Random index is " + index);
 		
-		int recipientNode = this.systemIDs.get(index);
-		LOG.debug("destination ID is " + recipientNode);
+		int randomRecipientID = getRandomNodeID();
+				
+		Event dataMessage = this.createRandomDataEventMessage(randomRecipientID);
 		
-		RoutingEntry routeEntry = this.routingTable.routeTo(recipientNode);
-		int payload = this.random.nextInt();
-		Event message = new OverlayNodeSendsData(recipientNode, this.uniqueID, payload);
+		sendEventToOverlayNode(randomRecipientID, dataMessage);
 		
 		// send message to routeEntry
-		LOG.debug("Sending data message to node " + recipientNode + " via node " + routeEntry.nodeID);
+		
+	}
+	
+	private void sendEventToOverlayNode(int recipientID, Event event) {
+		
+		RoutingEntry routeEntry = this.routingTable.routeTo(recipientID);
+				
 		TCPConnection connection = this.connections.getByID(routeEntry.nodeID);
+		
 		if (connection == null) {
 			LOG.fatal("Unable to find connection to node " + routeEntry.nodeID);
 			System.exit(1);
 		}
-		connection.send(message);
 		
-		// Only accessed by single thread
-		this.sendSummation += payload;
+		LOG.debug("Sending data message to node " + recipientID + " via node " + routeEntry.nodeID);
+		connection.send(event);
+		
 		this.sendTracker++;
+	}
+	
+	private int getRandomNodeID() {
+		int index = this.random.nextInt(this.systemIDs.size());
+		
+		int randomRecipientNodeID = this.systemIDs.get(index);
+		LOG.debug("destination ID is " + randomRecipientNodeID);
+		
+		return randomRecipientNodeID;
+	}
+	
+	private Event createRandomDataEventMessage(int recipientID) {
+		int payload = this.random.nextInt();
+		this.sendSummation += payload;
+		return new OverlayNodeSendsData(recipientID, this.uniqueID, payload);
 	}
 	
 	private void receiveNodeManifest(RegistrySendsNodeManifest r) {
@@ -297,8 +324,7 @@ public class MessagingNode extends Node {
 	
 	private void deregister() {
 		Event event = new OverlayNodeSendsDeregistration(this.listeningPort, this.uniqueID);
-		LOG.debug("Sending " + Protocol.typeString(event.getType()));
-		this.connections.getRegistry().send(event);
+		sendEventToRegistry(event);
 	}
 
 }
