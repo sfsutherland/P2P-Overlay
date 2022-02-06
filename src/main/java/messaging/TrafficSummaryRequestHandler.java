@@ -3,16 +3,16 @@ package messaging;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import node.ConnectionService;
+import node.OverlayConnectionService;
 import wireformats.Event;
 import wireformats.OverlayNodeReportsTrafficSummary;
 
 public class TrafficSummaryRequestHandler implements Handler {
 
 	private static Logger LOG = LogManager.getLogger( TrafficSummaryRequestHandler.class);
-	private ConnectionService connectionService;
+	private OverlayConnectionService connectionService;
 
-	public TrafficSummaryRequestHandler(ConnectionService cs) {
+	public TrafficSummaryRequestHandler(OverlayConnectionService cs) {
 		this.connectionService = cs;
 	}
 	@Override

@@ -3,7 +3,7 @@ package messaging;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import node.ConnectionService;
+import node.OverlayConnectionService;
 import wireformats.Event;
 import wireformats.OverlayNodeReportsTaskFinished;
 import wireformats.RegistryRequestsTaskInitiate;
@@ -11,9 +11,9 @@ import wireformats.RegistryRequestsTaskInitiate;
 public class TaskInitiateHandler implements Handler {
 
 	private static Logger LOG = LogManager.getLogger( TaskInitiateHandler.class);
-	private ConnectionService connectionService;
+	private OverlayConnectionService connectionService;
 
-	public TaskInitiateHandler(ConnectionService cs) {
+	public TaskInitiateHandler(OverlayConnectionService cs) {
 		this.connectionService = cs;
 	}
 	@Override

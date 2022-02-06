@@ -18,9 +18,9 @@ import wireformats.OverlayNodeSendsData;
 import wireformats.OverlayNodeSendsRegistration;
 import wireformats.Protocol;
 
-public class ConnectionService {
+public class OverlayConnectionService {
 	
-	private static Logger LOG = LogManager.getLogger( ConnectionService.class);
+	private static Logger LOG = LogManager.getLogger( OverlayConnectionService.class);
 		
 	private Node node;
 	private final int registryPort;
@@ -37,7 +37,7 @@ public class ConnectionService {
 
 	
 
-	public ConnectionService(Node node, int registryPort, String registryHost) {
+	public OverlayConnectionService(Node node, int registryPort, String registryHost) {
 		this.node = node;
 		this.registryPort = registryPort;
 		this.registryHost = registryHost;

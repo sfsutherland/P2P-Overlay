@@ -7,7 +7,7 @@ import java.net.Socket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import node.ConnectionService;
+import node.OverlayConnectionService;
 import routing.RoutingEntry;
 import transport.TCPConnection;
 import wireformats.Event;
@@ -17,9 +17,9 @@ import wireformats.RegistrySendsNodeManifest;
 public class ReceiveManifestHandler implements Handler {
 
 	private static Logger LOG = LogManager.getLogger( ReceiveManifestHandler.class);
-	private ConnectionService connectionService;
+	private OverlayConnectionService connectionService;
 	
-	public ReceiveManifestHandler(ConnectionService cs) {
+	public ReceiveManifestHandler(OverlayConnectionService cs) {
 		this.connectionService = cs;
 	}
 	@Override

@@ -3,7 +3,7 @@ package messaging;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import node.ConnectionService;
+import node.OverlayConnectionService;
 import routing.RoutingEntry;
 import transport.TCPConnection;
 import wireformats.Event;
@@ -12,9 +12,9 @@ import wireformats.OverlayNodeSendsData;
 public class DataHandler implements Handler {
 
 	private static Logger LOG = LogManager.getLogger( DataHandler.class);
-	private ConnectionService connectionService;
+	private OverlayConnectionService connectionService;
 
-	public DataHandler(ConnectionService cs) {
+	public DataHandler(OverlayConnectionService cs) {
 		this.connectionService = cs;
 	}
 	@Override

@@ -19,7 +19,7 @@ public class MessagingNode extends Node {
 	
 	private static Logger LOG = LogManager.getLogger( MessagingNode.class);
 	
-	private ConnectionService connectionService;
+	private OverlayConnectionService connectionService;
 
 		
 	public static void main(String[] args) {
@@ -41,7 +41,7 @@ public class MessagingNode extends Node {
 	}
 	
 	private MessagingNode(int suppliedPortNumber, String suppliedHost) {
-		this.connectionService = new ConnectionService(this, suppliedPortNumber, suppliedHost);		
+		this.connectionService = new OverlayConnectionService(this, suppliedPortNumber, suppliedHost);		
 		startDoingStuff();
 	}
 	

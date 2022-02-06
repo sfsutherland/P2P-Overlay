@@ -3,16 +3,16 @@ package messaging;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import node.ConnectionService;
+import node.OverlayConnectionService;
 import wireformats.Event;
 import wireformats.RegistryReportsRegistrationStatus;
 
 public class RegistrationResponseHandler implements Handler {
 	
 	private static Logger LOG = LogManager.getLogger( RegistrationResponseHandler.class);
-	private ConnectionService connectionService;
+	private OverlayConnectionService connectionService;
 
-	public RegistrationResponseHandler(ConnectionService cs) {
+	public RegistrationResponseHandler(OverlayConnectionService cs) {
 		this.connectionService = cs;
 	}
 	@Override
