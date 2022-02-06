@@ -10,7 +10,6 @@ public abstract class Node {
 	
 	private static Logger LOG = LogManager.getLogger( Node.class);
 	private boolean serverPortBound = false;
-	protected TCPConnectionCache connections;
 	
 	public abstract void onEvent(Event e);
 

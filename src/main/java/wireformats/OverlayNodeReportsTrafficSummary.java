@@ -6,6 +6,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import node.MetricsData;
+
 public class OverlayNodeReportsTrafficSummary implements Event {
 
 	public int id;
@@ -17,14 +19,14 @@ public class OverlayNodeReportsTrafficSummary implements Event {
 	
 	
 	// Construct from Message Node, specify port
-	public OverlayNodeReportsTrafficSummary(int id, int totalSent, int totalRelayed, long sentSummation, int totalReceived, long receivedSummation){
+	public OverlayNodeReportsTrafficSummary(int id, MetricsData metrics){
 		
 		this.id = id;
-		this.totalSent = totalSent;
-		this.totalRelayed = totalRelayed;
-		this.sentSummation = sentSummation;
-		this.totalReceived = totalReceived;
-		this.receivedSummation = receivedSummation;
+		this.totalSent 			= metrics.sendTracker;
+		this.totalRelayed 		= metrics.relayTracker;
+		this.sentSummation 		= metrics.sendSummation;
+		this.totalReceived 		= metrics.receiveTracker;
+		this.receivedSummation 	= metrics.receiveSummation;
 	}
 	
 	// Construct from byte array received at registry
