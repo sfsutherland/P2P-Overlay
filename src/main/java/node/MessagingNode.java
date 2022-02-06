@@ -1,8 +1,5 @@
 package node;
 
-import java.util.ArrayList;
-import java.util.Random;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,12 +10,10 @@ import messaging.ReceiveManifestHandler;
 import messaging.RegistrationResponseHandler;
 import messaging.TaskInitiateHandler;
 import messaging.TrafficSummaryRequestHandler;
-import routing.RoutingTable;
 import util.InteractiveCommandParser;
 import wireformats.Event;
 import wireformats.OverlayNodeSendsDeregistration;
 import wireformats.Protocol;
-import wireformats.RegistryReportsDeregistrationStatus;
 
 public class MessagingNode extends Node {
 	
@@ -115,5 +110,4 @@ public class MessagingNode extends Node {
 		Event event = new OverlayNodeSendsDeregistration(connectionService.listeningPort, connectionService.getUniqueID());
 		connectionService.sendEventToRegistry(event);
 	}
-
 }

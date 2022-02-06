@@ -93,7 +93,7 @@ public class ConnectionService {
 		this.connections.getRegistry().send(event);
 	}
 	
-	public void sendEventToOverlayNode(int recipientID, Event event) {
+	private void sendEventToOverlayNode(int recipientID, Event event) {
 		
 		RoutingEntry routeEntry = this.routingTable.routeTo(recipientID);
 				
