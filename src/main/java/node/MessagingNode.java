@@ -168,19 +168,22 @@ public class MessagingNode extends Node {
 			System.out.println("Unrecognized command");
 			break;
 		}
-	}
-	
+	}	
 
 	
 	private void register() {
-		Event event = new OverlayNodeSendsRegistration(this.listeningPort);
+		Event registrationRequestEvent = new OverlayNodeSendsRegistration(this.listeningPort);
+		sendEventToRegistry(registrationRequestEvent);
+	}
+	
+	private void sendEventToRegistry(Event event) {
 		this.connections.getRegistry().send(event);
 	}
 
 	
 	private void handleRegistryRequestsTrafficSummary() {
 		Event trafficReport = new OverlayNodeReportsTrafficSummary(this.uniqueID, this.sendTracker, this.relayTracker, this.sendSummation, this.receiveTracker, this.receiveSummation);
-		this.connections.getRegistry().send(trafficReport);
+		sendEventToRegistry(trafficReport);
 	}
 	
 	private synchronized void handleOverlayNodeSendsData(OverlayNodeSendsData d) {
