@@ -3,17 +3,18 @@ package transport;
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import node.Node;
+
+import node.MessagingNode;
 
 public class TCPConnectionCache {
 	
 	private static Logger LOG = LogManager.getLogger( TCPConnectionCache.class);
-	public Node node;
+	public MessagingNode messagingNode;
 	private TCPConnection registry;
 	public ArrayList<TCPConnection> connectionList;
 	
-	public TCPConnectionCache(Node n) {
-		this.node = n;
+	public TCPConnectionCache(MessagingNode n) {
+		this.messagingNode = n;
 		connectionList = new ArrayList<TCPConnection>();
 	}
 	

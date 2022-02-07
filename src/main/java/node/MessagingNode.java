@@ -12,14 +12,13 @@ import messaging.TaskInitiateHandler;
 import messaging.TrafficSummaryRequestHandler;
 import util.InteractiveCommandParser;
 import wireformats.Event;
-import wireformats.OverlayNodeSendsDeregistration;
 import wireformats.Protocol;
 
 public class MessagingNode extends Node {
 	
 	private static Logger LOG = LogManager.getLogger( MessagingNode.class);
 	
-	private OverlayConnectionService connectionService;
+	public OverlayConnectionService connectionService;
 
 		
 	public static void main(String[] args) {
@@ -61,9 +60,9 @@ public class MessagingNode extends Node {
 
 	
 	@Override
-	public void onEvent(Event e) {
+	public void handleEvent(Event e) {
 		
-		Handler handler;
+		Handler handler = null;
 		switch (e.getType()) {
 		
 		case Protocol.REGISTRY_REPORTS_REGISTRATION_STATUS:
@@ -88,14 +87,17 @@ public class MessagingNode extends Node {
 			LOG.debug("Unrecognized message received");
 			break;
 		}
-		handler.handle(e);
+		if (handler != null) {
+			handler.handle(e);
+		}
+		
 	}
 	
 	public void handleUserInput(String input) {
 		switch (input) {
 		
 		case "exit-overlay":
-			deregister();
+			connectionService.deregister();
 			break;
 		case "print-counters-and-diagnostics":
 			connectionService.metrics.printCountersAndDiagnostics();
@@ -104,10 +106,5 @@ public class MessagingNode extends Node {
 			System.out.println("Unrecognized command");
 			break;
 		}
-	}
-		
-	private void deregister() {
-		Event event = new OverlayNodeSendsDeregistration(connectionService.listeningPort, connectionService.getUniqueID());
-		connectionService.sendEventToRegistry(event);
 	}
 }

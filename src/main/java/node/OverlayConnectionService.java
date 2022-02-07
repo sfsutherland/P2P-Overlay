@@ -14,7 +14,9 @@ import transport.TCPConnection;
 import transport.TCPConnectionCache;
 import transport.TCPServerThread;
 import wireformats.Event;
+import wireformats.OverlayNodeReportsTaskFinished;
 import wireformats.OverlayNodeSendsData;
+import wireformats.OverlayNodeSendsDeregistration;
 import wireformats.OverlayNodeSendsRegistration;
 import wireformats.Protocol;
 
@@ -22,12 +24,14 @@ public class OverlayConnectionService {
 	
 	private static Logger LOG = LogManager.getLogger( OverlayConnectionService.class);
 		
-	private Node node;
+	private MessagingNode messagingNode;
 	private final int registryPort;
 	private final String registryHost;
 	private Random random;
 	private RoutingTable routingTable = null;
 	private int uniqueID;
+
+	private boolean serverPortBound = false;
 	
 	public int listeningPort;
 	public MetricsData metrics;
@@ -35,13 +39,11 @@ public class OverlayConnectionService {
 	public TCPConnectionCache connections;
 
 
-	
-
-	public OverlayConnectionService(Node node, int registryPort, String registryHost) {
-		this.node = node;
+	public OverlayConnectionService(MessagingNode node, int registryPort, String registryHost) {
+		this.messagingNode = node;
 		this.registryPort = registryPort;
 		this.registryHost = registryHost;
-		this.connections = new TCPConnectionCache(this.node);
+		this.connections = new TCPConnectionCache(this.messagingNode);
 		
 		
 		LOG.debug("New Connection Service initialized for registry "
@@ -133,6 +135,34 @@ public class OverlayConnectionService {
 		int payload = this.random.nextInt();
 		metrics.sendSummation += payload;
 		return new OverlayNodeSendsData(recipientID, this.uniqueID, payload);
+	}
+	
+	public void reportTaskFinished() {
+		// send task_finished_message
+		Event finishedMessage = new OverlayNodeReportsTaskFinished(listeningPort, this.getUniqueID());
+		this.sendEventToRegistry(finishedMessage);
+		
+		LOG.info("Finished sending all messages");
+	}
+	
+	
+	public synchronized void setPortBound() {
+		this.serverPortBound = true;
+		notify();
+	}
+	
+	protected synchronized void waitForPortBind() {
+		if (!serverPortBound)
+			try {
+				wait();
+			} catch (InterruptedException e) {
+				LOG.debug("wait() interrupted");
+			}
+	}
+	
+	public void deregister() {
+		Event event = new OverlayNodeSendsDeregistration(listeningPort, getUniqueID());
+		sendEventToRegistry(event);
 	}
 	public int getUniqueID() {
 		return uniqueID;

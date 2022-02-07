@@ -24,16 +24,10 @@ public class TaskInitiateHandler implements Handler {
 		for (int i = 0; i < message.numberOfMessages; i++) {
 			connectionService.sendRandomDataMessage();;
 		}
-		reportTaskFinished();
+		connectionService.reportTaskFinished();
 	}
 	
-	private void reportTaskFinished() {
-		// send task_finished_message
-		Event finishedMessage = new OverlayNodeReportsTaskFinished(connectionService.listeningPort, connectionService.getUniqueID());
-		connectionService.sendEventToRegistry(finishedMessage);
-		
-		LOG.info("Finished sending all messages");
-	}
+
 	
 	
 }

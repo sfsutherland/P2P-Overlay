@@ -40,23 +40,10 @@ public class TCPSender {
 		}
 		
 		try {
-			/*
-			 * LOG.debug("Socket is connected: " + (this.socket.isConnected() ? "true" : "false"));
-			 * LOG.debug("Socket is inputShutdown: " + (this.socket.isInputShutdown() ? "true" : "false"));
-			 * LOG.debug("Socket is outputShutdown: " + (this.socket.isOutputShutdown() ? "true" : "false"));
-			 * LOG.debug("Socket is bound: " + (this.socket.isBound() ? "true" : "false"));
-			 * LOG.debug("Socket ports: " + this.socket.getLocalPort() + " ---> " + this.socket.getPort());
-			 * LOG.debug("Socket IPs: " + this.socket.getLocalAddress().getHostAddress() + " ---> " + this.socket.getInetAddress().getHostAddress());
-			 */
-			
-			
-			// send a message
 			byte[] marshalledBytes = event.getBytes();
 	
 			int messageLength = marshalledBytes.length;
 			outputStream.write(marshalledBytes, 0, messageLength);
-			//LOG.debug("Sending " + messageLength + " byte message");
-			//LOG.debug("Have written " + outputStream.size() + " bytes into output stream.");
 		}
 		catch (IOException e) {
 			LOG.fatal("sending message");

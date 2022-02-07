@@ -6,7 +6,7 @@ import java.net.Socket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import node.Node;
+import node.MessagingNode;
 import wireformats.EventFactory;
 import wireformats.Protocol;
 import wireformats.Event;
@@ -15,11 +15,11 @@ public class TCPReceiverThread implements Runnable {
 	
 	private Logger LOG = LogManager.getLogger(TCPReceiverThread.class);
 	private Socket socket;
-	private Node ownerNode;
+	private MessagingNode ownerNode;
 	
 	public TCPReceiverThread(Socket s, TCPConnectionCache cc) {
 		this.socket = s;
-		this.ownerNode = cc.node;
+		this.ownerNode = cc.messagingNode;
 	}
 
 	@Override
@@ -50,7 +50,7 @@ public class TCPReceiverThread implements Runnable {
 					this.socket.close();
 					return;
 				}
-				ownerNode.onEvent(event);
+				ownerNode.handleEvent(event);
 				
 			} catch (IOException e) { // when remote end of socket exits the connection
 				try {

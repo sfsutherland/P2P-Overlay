@@ -55,7 +55,7 @@ public class TCPServerThread implements Runnable {
 			System.exit(1);
 		}
 		LOG.debug("TCP Server bound at port " + this.port);
-		cc.node.setPortBound();
+		cc.messagingNode.connectionService.setPortBound();
 		
 		while(true) {
 			try {
