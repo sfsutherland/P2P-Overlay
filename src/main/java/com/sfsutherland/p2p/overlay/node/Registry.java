@@ -43,6 +43,7 @@ public class Registry extends Node {
 	private int nodeSetupCount = 0;
 	private int tasksFinished = 0;
 	private int trafficReportsReceived = 0;
+	private TCPConnectionCache connections;
 	
 	public static void main(String[] args) {
 		
@@ -69,13 +70,13 @@ public class Registry extends Node {
 		TCPServerThread server = new TCPServerThread(this.port, cc);
 		Thread serverThread = new Thread(server);
 		serverThread.start();
-		waitForPortBind();
+		//waitForPortBind();
 		LOG.debug("Server thread initialized and port bound");
 		System.out.println("Waiting for nodes to connect");
 	}
 	
 	@Override
-	public void onEvent(Event e) {
+	public void handleEvent(Event e) {
 		switch(e.getType()) {
 		case Protocol.OVERLAY_NODE_SENDS_REGISTRATION:
 			attemptToRegister((OverlayNodeSendsRegistration) e);
@@ -145,7 +146,7 @@ public class Registry extends Node {
 		this.port = port;
 		LOG.debug("New Registry initialized with port " + port);
 		registeredIDs = new ArrayList<Integer>();
-		this.connections = new TCPConnectionCache(this);
+		//this.connections = new TCPConnectionCache(this);
 		this.rand = new Random();
 		this.routingTables = new ArrayList<RoutingTable>();
 		this.statisticsCollector = new StatisticsCollectorAndDisplay();

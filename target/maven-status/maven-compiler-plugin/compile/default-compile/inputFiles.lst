@@ -6,7 +6,6 @@
 /home/stephen/Projects/overlay/src/main/java/com/sfsutherland/p2p/overlay/transport/TCPServerThread.java
 /home/stephen/Projects/overlay/src/main/java/com/sfsutherland/p2p/overlay/wireformats/OverlayNodeReportsTaskFinished.java
 /home/stephen/Projects/overlay/src/main/java/com/sfsutherland/p2p/overlay/wireformats/OverlayNodeReportsTrafficSummary.java
-/home/stephen/Projects/overlay/src/main/java/module-info.java
 /home/stephen/Projects/overlay/src/main/java/com/sfsutherland/p2p/overlay/messaging/DataHandler.java
 /home/stephen/Projects/overlay/src/main/java/com/sfsutherland/p2p/overlay/wireformats/RegistrySendsNodeManifest.java
 /home/stephen/Projects/overlay/src/main/java/com/sfsutherland/p2p/overlay/routing/RoutingTable.java
