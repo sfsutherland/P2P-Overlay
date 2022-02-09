@@ -22,12 +22,6 @@ public class RegistrySendsNodeManifest implements Event {
 	
 	// Construct from byte array recieved at Messaging Node
 	public RegistrySendsNodeManifest(DataInputStream din) throws IOException {
-		
-		/*
-		 * ByteArrayInputStream baInputStream = new
-		 * ByteArrayInputStream(marshalledBytes); DataInputStream din = new
-		 * DataInputStream(new BufferedInputStream(baInputStream));
-		 */
 		this.routingTable = new RoutingTable();
 		this.allSystemNodes = new ArrayList<Integer>();
 		
@@ -49,8 +43,6 @@ public class RegistrySendsNodeManifest implements Event {
 			this.allSystemNodes.add(din.readInt());
 		}
 		
-		//baInputStream.close();
-		//din.close();
 	}
 	
 	@Override

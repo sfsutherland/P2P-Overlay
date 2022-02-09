@@ -24,26 +24,29 @@ public class RoutingTable {
 		return (byte) this.entryList.size();
 	}
 	
-	public RoutingEntry routeTo(int id) {
+	public RoutingEntry routeTo(int destinationID) {
+		
 		RoutingEntry before = this.entryList.get(0);
-		for (RoutingEntry re : this.entryList) {
-			if (re.nodeID == id)
-				return re;
+		
+		for (RoutingEntry routingEntry : this.entryList) {
 			
-			else if (before.nodeID == re.nodeID)
+			if (routingEntry.nodeID == destinationID)
+				return routingEntry;
+			
+			else if (before.nodeID == routingEntry.nodeID)
 				continue;
 			
-			else if ((before.nodeID < id) && (id < re.nodeID))
+			else if ((before.nodeID < destinationID) && (destinationID < routingEntry.nodeID))
 				return before;
 			
-			else if ( (re.nodeID < before.nodeID) && (before.nodeID < id))
+			else if ( (routingEntry.nodeID < before.nodeID) && (before.nodeID < destinationID))
 				return before;
 			
-			else if ((id < re.nodeID) && (re.nodeID < before.nodeID))
+			else if ((destinationID < routingEntry.nodeID) && (routingEntry.nodeID < before.nodeID))
 				return before;
 			
 			else
-				before = re;
+				before = routingEntry;
 		}
 		return before;
 	}
